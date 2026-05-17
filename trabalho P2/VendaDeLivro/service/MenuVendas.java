@@ -1,26 +1,33 @@
 package service;
 
 import model.*;
-import io.*;
-import tcp.ClienteVendas;
-import java.util.ArrayList;
-import java.util.List;
+import rmi.MecanismoRMI;
+import io.SerializadorManual;
+
 import java.util.Scanner;
-import java.io.*;
+import java.util.List;
 
 public class MenuVendas {
-    private List<Produto> estoqueLocal = new ArrayList<>();
-    private List<Produto> carrinho = new ArrayList<>();
+    private Carrinho carrinho = new Carrinho(); // Segunda agregação aplicada aqui
     private Scanner scanner = new Scanner(System.in);
-    private final String ARQUIVO_ESTOQUE = "estoque.dat";
+    private MecanismoRMI rmi;
+    
+    private final String SERVER_IP = "localhost";
+    private final int SERVER_PORT = 12345;
+
+    public MenuVendas() {
+        try {
+            this.rmi = new MecanismoRMI();
+        } catch (Exception e) {
+            System.err.println("Erro ao iniciar subsistema RMI: " + e.getMessage());
+        }
+    }
 
     public void iniciar() {
-        carregarEstoque();
-        
         int opcao = -1;
         while (opcao != 0) {
-            System.out.println("\n=== LIVRARIA - ÁREA DO CLIENTE ===");
-            System.out.println("1. Ver Livros Disponíveis");
+            System.out.println("\n=== LIVRARIA - ÁREA DO CLIENTE (VIA RMI) ===");
+            System.out.println("1. Ver Livros Disponíveis (Vitrine Remota)");
             System.out.println("2. Adicionar ao Carrinho");
             System.out.println("3. GERENCIAR CARRINHO (Ver / Remover / Finalizar)");
             System.out.println("0. Sair");
@@ -37,12 +44,19 @@ public class MenuVendas {
         }
     }
 
+    private List<Produto> buscarEstoqueRemoto() throws Exception {
+        byte[] respostaBytes = rmi.doOperation("EstoqueCentral", "listarProdutos", new byte[0], SERVER_IP, SERVER_PORT);
+        return SerializadorManual.bytesParaListaProdutos(respostaBytes);
+    }
+
     private void listarDisponiveis() {
-        System.out.println("\n--- Vitrine de Livros ---");
-        if (estoqueLocal.isEmpty()) {
-            System.out.println("Estoque vazio.");
-        } else {
-            estoqueLocal.forEach(System.out::println);
+        System.out.println("\n--- Vitrine de Livros (Buscando no Servidor...) ---");
+        try {
+            List<Produto> estoque = buscarEstoqueRemoto();
+            if (estoque.isEmpty()) System.out.println("Estoque do servidor vazio.");
+            else estoque.forEach(System.out::println);
+        } catch (Exception e) {
+            System.out.println("Erro ao atualizar vitrine via RMI: " + e.getMessage());
         }
     }
 
@@ -51,32 +65,40 @@ public class MenuVendas {
         int id = scanner.nextInt();
         scanner.nextLine();
 
-        Produto p = buscarNoEstoque(id);
-        if (p == null) {
-            System.out.println("Livro não encontrado.");
-            return;
-        }
-
-        if (p instanceof LivroFisico) {
-            LivroFisico lf = (LivroFisico) p;
-            System.out.println("Disponível: " + lf.getEstoque());
-            System.out.print("Quantidade desejada: ");
-            int qtd = scanner.nextInt();
-            scanner.nextLine();
-
-            if (qtd > 0 && qtd <= lf.getEstoque()) {
-                LivroFisico itemCarrinho = new LivroFisico(lf.getId(), lf.getTitulo(), lf.getDescricao(), 
-                                           lf.getCategoria(), lf.getAutor(), lf.getPreco(), 
-                                           lf.getPeso(), qtd, lf.getTipoDeCapa());
-                carrinho.add(itemCarrinho);
-                lf.setEstoque(lf.getEstoque() - qtd);
-                System.out.println("Adicionado ao carrinho!");
-            } else {
-                System.out.println("Erro: Quantidade indisponível.");
+        try {
+            List<Produto> estoque = buscarEstoqueRemoto();
+            Produto p = null;
+            for (Produto prod : estoque) {
+                if (prod.getId() == id) { p = prod; break; }
             }
-        } else {
-            carrinho.add(p);
-            System.out.println("Adicionado ao carrinho!");
+
+            if (p == null) {
+                System.out.println("Livro não encontrado no estoque remoto.");
+                return;
+            }
+
+            if (p instanceof LivroFisico) {
+                LivroFisico lf = (LivroFisico) p;
+                System.out.println("Disponível no servidor: " + lf.getEstoque());
+                System.out.print("Quantidade desejada: ");
+                int qtd = scanner.nextInt();
+                scanner.nextLine();
+
+                if (qtd > 0 && qtd <= lf.getEstoque()) {
+                    LivroFisico itemCarrinho = new LivroFisico(lf.getId(), lf.getTitulo(), lf.getDescricao(), 
+                                               lf.getCategoria(), lf.getAutor(), lf.getPreco(), 
+                                               lf.getPeso(), qtd, lf.getTipoDeCapa());
+                    carrinho.adicionar(itemCarrinho);
+                    System.out.println("Adicionado ao carrinho local!");
+                } else {
+                    System.out.println("Erro: Quantidade indisponível.");
+                }
+            } else {
+                carrinho.adicionar(p);
+                System.out.println("Adicionado ao carrinho local!");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao validar estoque remoto: " + e.getMessage());
         }
     }
 
@@ -91,7 +113,7 @@ public class MenuVendas {
             System.out.println("\n--- SEU CARRINHO ---");
             double totalGeral = 0;
 
-            for (Produto p : carrinho) {
+            for (Produto p : carrinho.getItens()) {
                 double subtotal = p.getPreco();
                 String info = "";
 
@@ -106,7 +128,7 @@ public class MenuVendas {
 
             System.out.printf("\nTOTAL ATUAL: R$ %.2f\n", totalGeral);
             System.out.println("---------------------------");
-            System.out.println("1. Finalizar Compra (Enviar ao Servidor)");
+            System.out.println("1. Finalizar Compra (Invocação RMI)");
             System.out.println("2. Remover Item do Carrinho");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha: ");
@@ -124,69 +146,42 @@ public class MenuVendas {
     }
 
     private void removerDoCarrinho() {
-        System.out.print("Digite o ID para remover: ");
+        System.out.print("Digite o ID para remover do carrinho: ");
         int id = scanner.nextInt();
         scanner.nextLine();
 
         Produto itemRemover = null;
-        for (Produto p : carrinho) {
-            if (p.getId() == id) {
-                itemRemover = p;
-                break;
-            }
+        for (Produto p : carrinho.getItens()) {
+            if (p.getId() == id) { itemRemover = p; break; }
         }
 
         if (itemRemover != null) {
-            if (itemRemover instanceof LivroFisico) {
-                LivroFisico lfCarrinho = (LivroFisico) itemRemover;
-                Produto pEstoque = buscarNoEstoque(id);
-                if (pEstoque instanceof LivroFisico) {
-                    ((LivroFisico) pEstoque).setEstoque(((LivroFisico) pEstoque).getEstoque() + lfCarrinho.getEstoque());
-                }
-            }
-            carrinho.remove(itemRemover);
-            System.out.println("Item removido com sucesso.");
+            carrinho.remover(itemRemover);
+            System.out.println("Item removido do carrinho local.");
         } else {
-            System.out.println("Item não encontrado no carrinho.");
+            System.out.println("Item não encontrado.");
         }
     }
 
     private void finalizarVenda() {
-        System.out.print("Confirmar envio ao servidor? (s/n): ");
+        System.out.print("Confirmar fechamento e envio remoto? (s/n): ");
         if (scanner.nextLine().equalsIgnoreCase("s")) {
-            salvarEstoqueAtualizado();
-            
-            new ClienteVendas().comunicarComServidor(carrinho); 
-            
-            carrinho.clear();
-            System.out.println("Venda concluída e enviada!");
-        }
-    }
+            try {
+                // Serialização manual da lista agregada pelo carrinho
+                byte[] carrinhoBytes = SerializadorManual.listaProdutosParaBytes(carrinho.getItens());
+                
+                // Invocação remota do método "processarVenda"
+                byte[] respostaBytes = rmi.doOperation("ServicoVendas", "processarVenda", carrinhoBytes, SERVER_IP, SERVER_PORT);
+                String reciboServidor = SerializadorManual.bytesParaString(respostaBytes);
 
-    private Produto buscarNoEstoque(int id) {
-        for (Produto p : estoqueLocal) {
-            if (p.getId() == id) return p;
-        }
-        return null;
-    }
-
-    private void carregarEstoque() {
-        File f = new File(ARQUIVO_ESTOQUE);
-        if (!f.exists()) return;
-        try (FileInputStream fis = new FileInputStream(f)) {
-            PojoInputStream pis = new PojoInputStream(fis);
-            estoqueLocal = pis.lerDados();
-        } catch (IOException e) {
-            System.out.println("Erro ao ler arquivo de estoque.");
-        }
-    }
-
-    private void salvarEstoqueAtualizado() {
-        try (FileOutputStream fos = new FileOutputStream(ARQUIVO_ESTOQUE)) {
-            PojoOutputStream pos = new PojoOutputStream(estoqueLocal.toArray(new Produto[0]), estoqueLocal.size(), fos);
-            pos.enviarDados();
-        } catch (IOException e) {
-            System.err.println("Erro ao atualizar estoque local.");
+                System.out.println("\n--- RECIBO RECEBIDO VIA RMI ---");
+                System.out.println(reciboServidor);
+                System.out.println("--------------------------------");
+                
+                carrinho.limpar();
+            } catch (Exception e) {
+                System.out.println("Erro ao finalizar venda por RMI: " + e.getMessage());
+            }
         }
     }
 
