@@ -42,7 +42,6 @@ public class ServidorRMI {
                             List<Produto> itensCarrinho = SerializadorManual.bytesParaListaProdutos(argumentos);
                             String recibo = serviceVendas.processarVenda(itensCarrinho);
                             
-                            // Atualiza o estoque local deduzindo quantidades vendidas
                             for (Produto pCarrinho : itensCarrinho) {
                                 for (Produto pEstoque : loja.getPedidosRealizados()) {
                                     if (pEstoque.getId() == pCarrinho.getId() && pEstoque instanceof LivroFisico) {
@@ -72,7 +71,7 @@ public class ServidorRMI {
                             System.out.println("Produto ID " + idParaRemover + " removido via RMI.");
                             break;
                         
-                        case "editarProduto": // ADICIONE ESTE CASE AQUI
+                        case "editarProduto":
                            Produto prodEditado = SerializadorManual.bytesParaProduto(argumentos);
                            if (prodEditado != null) {
                                List<Produto> listaEstoque = loja.getPedidosRealizados();

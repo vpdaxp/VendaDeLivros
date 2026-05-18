@@ -8,7 +8,7 @@ import java.util.Scanner;
 import java.util.List;
 
 public class MenuVendas {
-    private Carrinho carrinho = new Carrinho(); // Segunda agregação aplicada aqui
+    private Carrinho carrinho = new Carrinho();
     private Scanner scanner = new Scanner(System.in);
     private MecanismoRMI rmi;
     
@@ -167,10 +167,8 @@ public class MenuVendas {
         System.out.print("Confirmar fechamento e envio remoto? (s/n): ");
         if (scanner.nextLine().equalsIgnoreCase("s")) {
             try {
-                // Serialização manual da lista agregada pelo carrinho
                 byte[] carrinhoBytes = SerializadorManual.listaProdutosParaBytes(carrinho.getItens());
                 
-                // Invocação remota do método "processarVenda"
                 byte[] respostaBytes = rmi.doOperation("ServicoVendas", "processarVenda", carrinhoBytes, SERVER_IP, SERVER_PORT);
                 String reciboServidor = SerializadorManual.bytesParaString(respostaBytes);
 

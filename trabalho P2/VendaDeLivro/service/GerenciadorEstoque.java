@@ -65,7 +65,6 @@ public class GerenciadorEstoque {
 
     private void adicionarAoEstoque() {
         try {
-            // Obtém o estoque remoto para calcular o próximo ID incremental único de forma distribuída
             List<Produto> estoque = obterEstoqueRemoto();
             int proximoId = 1;
             for (Produto prod : estoque) {

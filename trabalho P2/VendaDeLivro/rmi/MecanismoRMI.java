@@ -10,7 +10,7 @@ public class MecanismoRMI {
     
     private InetAddress lastClientAddress;
     private int lastClientPort;
-    private int lastRequestId; // NOVA VARIÁVEL AQUI
+    private int lastRequestId;
 
     public MecanismoRMI(int porta) throws SocketException {
         this.socket = new DatagramSocket(porta);
@@ -45,16 +45,13 @@ public class MecanismoRMI {
         this.lastClientAddress = receivePacket.getAddress();
         this.lastClientPort = receivePacket.getPort();
         
-        // Espia o pacote recebido apenas para guardar o requestId internamente
         MensagemRMI requestMsg = MensagemRMI.fromBytes(Arrays.copyOf(receivePacket.getData(), receivePacket.getLength()));
         this.lastRequestId = requestMsg.getRequestId();
 
         return Arrays.copyOf(receivePacket.getData(), receivePacket.getLength());
     }
 
-    // Assinatura EXATAMENTE como pedida no PDF: 3 parâmetros
     public void sendReply(byte[] reply, InetAddress clientHost, int clientPort) throws Exception {
-        // Usa o lastRequestId guardado na hora de montar a resposta
         MensagemRMI replyMsg = new MensagemRMI(1, this.lastRequestId, null, null, reply);
         byte[] packetBytes = replyMsg.toBytes();
 
