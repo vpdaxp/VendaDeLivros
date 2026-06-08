@@ -1,5 +1,17 @@
 package model;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME, 
+    include = JsonTypeInfo.As.PROPERTY, 
+    property = "tipo" // A palavra-chave que define o if/else
+)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = LivroFisico.class, name = "Fisico"),
+    @JsonSubTypes.Type(value = LivroDigital.class, name = "Digital"),
+    @JsonSubTypes.Type(value = LivroColecionavel.class, name = "Colecionavel")
+})
 public abstract class Produto {
     private int id;
     private String titulo;

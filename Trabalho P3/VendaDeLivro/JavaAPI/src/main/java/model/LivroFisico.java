@@ -6,6 +6,7 @@ public class LivroFisico extends Produto {
     private int estoque;
 
     public LivroFisico() {
+        super();
     }
 
     public LivroFisico(int id, String titulo, String descricao, String categoria, String autor, double preco, double peso, int estoque, String tipoDeCapa) {
