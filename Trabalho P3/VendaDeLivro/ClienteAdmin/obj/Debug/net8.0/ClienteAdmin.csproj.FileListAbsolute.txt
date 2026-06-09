@@ -1,0 +1,15 @@
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\bin\Debug\net8.0\ClienteAdmin.exe
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\bin\Debug\net8.0\ClienteAdmin.deps.json
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\bin\Debug\net8.0\ClienteAdmin.runtimeconfig.json
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\bin\Debug\net8.0\ClienteAdmin.dll
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\bin\Debug\net8.0\ClienteAdmin.pdb
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.AssemblyInfoInputs.cache
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.AssemblyInfo.cs
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.csproj.CoreCompileInputs.cache
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.sourcelink.json
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.dll
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\refint\ClienteAdmin.dll
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.pdb
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ClienteAdmin.genruntimeconfig.cache
+C:\Users\vitor\Documents\VsCode\VendaDeLivros\Trabalho P3\VendaDeLivro\ClienteAdmin\obj\Debug\net8.0\ref\ClienteAdmin.dll

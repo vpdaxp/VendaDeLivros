@@ -5,18 +5,19 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME, 
     include = JsonTypeInfo.As.PROPERTY, 
-    property = "tipo" // A palavra-chave que define o if/else
+    property = "tipo",
+    visible = true // <--- ISSO AQUI RESOLVE O PROBLEMA
 )
 @JsonSubTypes({
     @JsonSubTypes.Type(value = LivroFisico.class, name = "Fisico"),
-    @JsonSubTypes.Type(value = LivroDigital.class, name = "Digital"),
-    @JsonSubTypes.Type(value = LivroColecionavel.class, name = "Colecionavel")
+    @JsonSubTypes.Type(value = LivroDigital.class, name = "Digital")
 })
-public abstract class Produto {
+public class Produto {
     private int id;
     private String titulo;
     private String descricao;
     private String categoria;
+    private String tipo;
     private String autor;
     private double preco;
 
@@ -36,9 +37,18 @@ public abstract class Produto {
     public int getId() {
         return id;
     }
+    
 
     public void setId(int id) {
         this.id = id;
+    }
+    
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
     public String getTitulo() {

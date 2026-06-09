@@ -1,0 +1,12 @@
+[ {
+  "id" : 3,
+  "titulo" : "casa",
+  "descricao" : "aca",
+  "categoria" : "caiu",
+  "tipo" : "Fisico",
+  "autor" : "farça",
+  "preco" : 22.0,
+  "tipoDeCapa" : "nmorm",
+  "peso" : 1.0,
+  "estoque" : 49
+} ]

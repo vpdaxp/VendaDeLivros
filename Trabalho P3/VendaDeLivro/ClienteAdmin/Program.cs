@@ -7,7 +7,6 @@ namespace ClienteAdmin
 {
     class Program
     {
-        // O Main agora é 'async' para podermos usar o 'await' na hora de chamar a API
         static async Task Main(string[] args)
         {
             bool rodando = true;
@@ -19,7 +18,8 @@ namespace ClienteAdmin
                 Console.WriteLine("1. Ver Estoque Completo");
                 Console.WriteLine("2. Cadastrar Livro Físico");
                 Console.WriteLine("3. Cadastrar Livro Digital");
-                Console.WriteLine("4. Remover Livro");
+                Console.WriteLine("4. Alterar Livro"); // <-- AQUI ESTÁ A NOVA OPÇÃO
+                Console.WriteLine("5. Remover Livro"); // <-- O REMOVER PASSOU PARA A OPÇÃO 5
                 Console.WriteLine("0. Sair");
                 Console.Write("\nEscolha uma opção: ");
 
@@ -27,30 +27,13 @@ namespace ClienteAdmin
 
                 switch (opcao)
                 {
-                    case "1":
-                        await ApiClient.ListarEstoque();
-                        PausarTela();
-                        break;
-                    case "2":
-                        await CadastrarFisico();
-                        PausarTela();
-                        break;
-                    case "3":
-                        await CadastrarDigital();
-                        PausarTela();
-                        break;
-                    case "4":
-                        await RemoverProduto();
-                        PausarTela();
-                        break;
-                    case "0":
-                        rodando = false;
-                        Console.WriteLine("Encerrando o painel...");
-                        break;
-                    default:
-                        Console.WriteLine("Opção inválida!");
-                        PausarTela();
-                        break;
+                    case "1": await ApiClient.ListarEstoque(); PausarTela(); break;
+                    case "2": await CadastrarFisico(); PausarTela(); break;
+                    case "3": await CadastrarDigital(); PausarTela(); break;
+                    case "4": await AlterarProduto(); PausarTela(); break; // <-- LIGAÇÃO AO MÉTODO NOVO
+                    case "5": await RemoverProduto(); PausarTela(); break; // <-- ATUALIZADO PARA 5
+                    case "0": rodando = false; break;
+                    default: Console.WriteLine("Opção inválida!"); PausarTela(); break;
                 }
             }
         }
@@ -61,16 +44,11 @@ namespace ClienteAdmin
             Console.ReadLine();
         }
 
-        // --- Lógica de Captura de Dados ---
-
         static Livro LerDadosBasicos(string tipoProduto)
         {
             Livro l = new Livro();
-            l.Tipo = tipoProduto; // Muito importante: preenche com "Fisico" ou "Digital"
-
-            Console.Write("ID do Livro (número): ");
-            l.Id = int.Parse(Console.ReadLine() ?? "0");
-
+            l.Tipo = tipoProduto; 
+            
             Console.Write("Título: ");
             l.Titulo = Console.ReadLine();
 
@@ -79,6 +57,14 @@ namespace ClienteAdmin
 
             Console.Write("Autor: ");
             l.Autor = Console.ReadLine();
+
+            // --- NOVA PARTE: Descrição Opcional ---
+            Console.Write("Descrição (Opcional - dê Enter para pular): ");
+            string desc = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(desc))
+            {
+                l.Descricao = desc;
+            }
 
             Console.Write("Preço (R$): ");
             l.Preco = double.Parse(Console.ReadLine() ?? "0");
@@ -97,11 +83,96 @@ namespace ClienteAdmin
             Console.Write("Quantidade em Estoque: ");
             novoLivro.Estoque = int.Parse(Console.ReadLine() ?? "0");
 
-            Console.Write("Tipo de Capa (ex: Brochura, Dura): ");
+            Console.Write("Tipo de Capa: ");
             novoLivro.TipoDeCapa = Console.ReadLine();
 
-            // Manda o mensageiro arremessar o objeto para o Java
             await ApiClient.CadastrarLivro(novoLivro); 
+        }
+
+        static async Task AlterarProduto()
+        {
+            Console.Write("\nDigite o ID do livro que deseja alterar: ");
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("ID inválido.");
+                return;
+            }
+
+            // Busca os dados atuais lá no Java
+            Livro? livroAtual = await ApiClient.BuscarLivro(id);
+            if (livroAtual == null)
+            {
+                Console.WriteLine("Livro não encontrado no estoque!");
+                return;
+            }
+
+            Console.WriteLine($"\n--- Alterando Livro: {livroAtual.Titulo} ---");
+            Console.WriteLine("(DICA: Pressione ENTER sem digitar nada para manter o valor atual)\n");
+
+            Console.Write($"Título [{livroAtual.Titulo}]: ");
+            string entrada = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.Titulo = entrada;
+
+            Console.Write($"Categoria [{livroAtual.Categoria}]: ");
+            entrada = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.Categoria = entrada;
+
+            Console.Write($"Autor [{livroAtual.Autor}]: ");
+            entrada = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.Autor = entrada;
+
+            Console.Write($"Descrição [{livroAtual.Descricao}]: ");
+            entrada = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.Descricao = entrada;
+
+            Console.Write($"Preço [{livroAtual.Preco}]: ");
+            entrada = Console.ReadLine() ?? "";
+            if (!string.IsNullOrWhiteSpace(entrada) && double.TryParse(entrada, out double preco))
+            {
+                livroAtual.Preco = preco;
+            }
+
+            // Verifica as propriedades exclusivas de acordo com o Tipo salvo
+            if (livroAtual.Tipo == "Fisico")
+            {
+                Console.Write($"Peso [{livroAtual.Peso}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada) && double.TryParse(entrada, out double peso))
+                {
+                    livroAtual.Peso = peso;
+                }
+
+                Console.Write($"Quantidade em Estoque [{livroAtual.Estoque}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada) && int.TryParse(entrada, out int estoque))
+                {
+                    livroAtual.Estoque = estoque;
+                }
+
+                Console.Write($"Tipo de Capa [{livroAtual.TipoDeCapa}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.TipoDeCapa = entrada;
+            }
+            else if (livroAtual.Tipo == "Digital")
+            {
+                Console.Write($"Formato [{livroAtual.Formato}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.Formato = entrada;
+
+                Console.Write($"Tamanho [{livroAtual.Tamanho}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada) && double.TryParse(entrada, out double tamanho))
+                {
+                    livroAtual.Tamanho = tamanho;
+                }
+
+                Console.Write($"Link de Download [{livroAtual.LinkDownload}]: ");
+                entrada = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(entrada)) livroAtual.LinkDownload = entrada;
+            }
+
+            // Envia o pacote com as informações mantidas e alteradas para o Java
+            await ApiClient.AtualizarLivro(id, livroAtual);
         }
 
         static async Task CadastrarDigital()
@@ -118,7 +189,6 @@ namespace ClienteAdmin
             Console.Write("Link de Download: ");
             novoLivro.LinkDownload = Console.ReadLine();
 
-            // Manda o mensageiro arremessar o objeto para o Java
             await ApiClient.CadastrarLivro(novoLivro);
         }
 
@@ -128,10 +198,6 @@ namespace ClienteAdmin
             if (int.TryParse(Console.ReadLine(), out int id))
             {
                 await ApiClient.RemoverLivro(id);
-            }
-            else
-            {
-                Console.WriteLine("ID inválido. Digite um número inteiro.");
             }
         }
     }

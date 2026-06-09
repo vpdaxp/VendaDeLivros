@@ -4,15 +4,12 @@ namespace ClienteAdmin.Models
 {
     public class Livro
     {
-        // Campos Comuns a todos os produtos
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
         [JsonPropertyName("titulo")]
         public string? Titulo { get; set; }
 
-        // ESSA É A VARIÁVEL MAIS IMPORTANTE! 
-        // É ela que avisa o Java se é "Fisico", "Digital" ou "Colecionavel"
         [JsonPropertyName("tipo")]
         public string? Tipo { get; set; } 
 
@@ -28,9 +25,7 @@ namespace ClienteAdmin.Models
         [JsonPropertyName("preco")]
         public double Preco { get; set; }
 
-
         // --- Campos exclusivos de Livro Físico ---
-        // O "?" significa que pode ser nulo (caso o livro seja digital)
         
         [JsonPropertyName("peso")]
         public double? Peso { get; set; }
@@ -40,7 +35,6 @@ namespace ClienteAdmin.Models
 
         [JsonPropertyName("tipoDeCapa")]
         public string? TipoDeCapa { get; set; }
-
 
         // --- Campos exclusivos de Livro Digital ---
 
@@ -53,4 +47,4 @@ namespace ClienteAdmin.Models
         [JsonPropertyName("linkDownload")]
         public string? LinkDownload { get; set; }
     }
-}
+}   

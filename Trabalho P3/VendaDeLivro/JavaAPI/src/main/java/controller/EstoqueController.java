@@ -2,7 +2,7 @@ package controller;
 
 import io.javalin.http.Context;
 import model.Produto;
-import service.BancoDeDados; // Importando o nosso banco
+import service.BancoDeDados;
 
 public class EstoqueController {
     
@@ -10,7 +10,6 @@ public class EstoqueController {
         try {
             Produto novoLivro = ctx.bodyAsClass(Produto.class);
             
-            // AGORA SIM! Salvando na lista central e no arquivo
             BancoDeDados.adicionar(novoLivro); 
             
             System.out.println("Novo livro salvo no JSON: " + novoLivro.getTitulo());
@@ -28,10 +27,27 @@ public class EstoqueController {
     public static void removerLivro(Context ctx) {
         int id = Integer.parseInt(ctx.pathParam("id"));
         
-        // Remove da lista central e atualiza o arquivo
         BancoDeDados.remover(id);
         
         System.out.println("Livro ID " + id + " removido.");
         ctx.json("{ \"mensagem\": \"Livro ID " + id + " removido do estoque!\" }");
     }
+
+    public static void atualizarLivro(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Produto livroAtualizado = ctx.bodyAsClass(Produto.class);
+            
+            BancoDeDados.atualizar(id, livroAtualizado);
+            
+            System.out.println("Livro ID " + id + " atualizado.");
+            ctx.status(200);
+            ctx.json("{ \"mensagem\": \"Livro ID " + id + " atualizado com sucesso!\" }");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(400);
+            ctx.json("{ \"erro\": \"Formato inválido ao atualizar.\" }");
+        }
+    }
+
 }

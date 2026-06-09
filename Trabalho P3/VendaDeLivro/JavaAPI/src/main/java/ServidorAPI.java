@@ -2,28 +2,31 @@ import io.javalin.Javalin;
 import controller.CatalogoController;
 import controller.EstoqueController;
 import controller.VendasController;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.json.JavalinJackson;
 
 public class ServidorAPI {
     public static void main(String[] args) {
         
-        // 1. Inicia o servidor Javalin na porta 8080
+        ObjectMapper mapper = new ObjectMapper();
+        
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
         Javalin app = Javalin.create(config -> {
-            // Permite que seus clientes em Python/C# façam requisições sem erro de CORS
             config.plugins.enableCors(cors -> {
                 cors.add(it -> it.anyHost());
             });
+            config.jsonMapper(new JavalinJackson(mapper)); 
         }).start(8080);
 
-        // 2. Mapeamento dos 3 Objetos Distribuídos (Rotas da API)
-
-        // Objeto 1: Catálogo (Para o cliente listar produtos)
         app.get("/produtos", CatalogoController::listarVitrine);
 
-        // Objeto 2: Estoque (Para o admin adicionar/remover do servidor)
+        app.put("/estoque/{id}", EstoqueController::atualizarLivro);
+
         app.post("/estoque", EstoqueController::adicionarLivro);
         app.delete("/estoque/{id}", EstoqueController::removerLivro);
 
-        // Objeto 3: Vendas (Para o cliente fechar o carrinho)
         app.post("/vendas", VendasController::processarCompra);
 
         System.out.println("Servidor da Livraria iniciado com sucesso!");

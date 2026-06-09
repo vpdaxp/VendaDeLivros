@@ -10,11 +10,9 @@ namespace ClienteAdmin.Services
 {
     public class ApiClient
     {
-        // Instância única do mensageiro apontando para a sua API Java
         private static readonly HttpClient client = new HttpClient();
         private const string BASE_URL = "http://localhost:8080";
 
-        // 1. MÉTODO GET: Buscar a vitrine
         public static async Task ListarEstoque()
         {
             try
@@ -22,12 +20,10 @@ namespace ClienteAdmin.Services
                 Console.WriteLine("\nConectando ao servidor Java...");
                 var response = await client.GetAsync($"{BASE_URL}/produtos");
                 
-                // Se o Java devolver erro 400 ou 500, ele cai no catch
                 response.EnsureSuccessStatusCode(); 
                 
                 var json = await response.Content.ReadAsStringAsync();
                 
-                // Transforma o JSON recebido de volta em uma Lista de Livros no C#
                 var livros = JsonSerializer.Deserialize<List<Livro>>(json);
                 
                 Console.WriteLine("\n=== ESTOQUE ATUAL DO SERVIDOR ===");
@@ -39,7 +35,12 @@ namespace ClienteAdmin.Services
 
                 foreach (var livro in livros)
                 {
-                    Console.WriteLine($"ID: {livro.Id} | [{livro.Tipo}] {livro.Titulo} | Preço: R$ {livro.Preco:F2}");
+                    string pesoFormatado = livro.Peso.HasValue ? $"{livro.Peso}kg" : "N/A";
+                    string quantidadeStr = livro.Estoque.HasValue ? livro.Estoque.ToString() : "N/A";
+                    
+                    string tipoFormatado = string.IsNullOrEmpty(livro.Tipo) ? "N/A" : livro.Tipo;
+
+                    Console.WriteLine($"ID: {livro.Id} | Tipo: {tipoFormatado} | Livro: {livro.Titulo} | Autor: {livro.Autor} | Preço: R$ {livro.Preco:F2} | Peso: {pesoFormatado} | Qtd: {quantidadeStr}");
                 }
             }
             catch (Exception ex)
@@ -48,14 +49,12 @@ namespace ClienteAdmin.Services
             }
         }
 
-        // 2. MÉTODO POST: Enviar um livro novo
         public static async Task CadastrarLivro(Livro novoLivro)
         {
             try
             {
                 Console.WriteLine("\nEnviando dados para o servidor...");
                 
-                // O PostAsJsonAsync converte o objeto 'novoLivro' para JSON automaticamente!
                 var response = await client.PostAsJsonAsync($"{BASE_URL}/estoque", novoLivro);
                 
                 var resultado = await response.Content.ReadAsStringAsync();
@@ -75,7 +74,37 @@ namespace ClienteAdmin.Services
             }
         }
 
-        // 3. MÉTODO DELETE: Remover um livro
+        public static async Task<Livro?> BuscarLivro(int id)
+        {
+            try
+            {
+                var response = await client.GetAsync($"{BASE_URL}/produtos");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var livros = JsonSerializer.Deserialize<List<Livro>>(json);
+                    return livros?.Find(l => l.Id == id);
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"Erro ao buscar: {ex.Message}"); }
+            return null;
+        }
+
+        public static async Task AtualizarLivro(int id, Livro livroAtualizado)
+        {
+            try
+            {
+                Console.WriteLine("\nEnviando atualização para o servidor...");
+                var response = await client.PutAsJsonAsync($"{BASE_URL}/estoque/{id}", livroAtualizado);
+                var resultado = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"\n[SUCESSO] O Java respondeu: {resultado}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\n[ERRO DE REDE]: {ex.Message}");
+            }
+        }
+
         public static async Task RemoverLivro(int id)
         {
             try
