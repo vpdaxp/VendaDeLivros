@@ -1,0 +1,60 @@
+1. Arquitetura Geral do Sistema
+O ecossistema foi projetado para garantir o encapsulamento das regras de negócio no servidor, enquanto delega as responsabilidades de interface e validação primária para os clientes periféricos.
+
+Protocolo de Comunicação: Invocação remota via requisições HTTP (GET, POST, PUT, DELETE).
+
+Formato de Troca de Dados (Serialização): JSON, garantindo a interoperabilidade entre as diferentes plataformas.
+
+Topologia: * 1 Servidor Central (Backend API).
+
+1 Cliente Administrativo (Back-office).
+
+1 Cliente Consumidor (Front-office/Ponto de Venda).
+
+2. Servidor Central (Java + Javalin)
+Papel: Fonte Única da Verdade (Single Source of Truth), responsável por gerenciar o estado global, persistência de dados e regras de consistência.
+
+Principais Implementações e Correções:
+
+Controle Centralizado de Identidade (IDs): Remoção da responsabilidade do cliente na geração de IDs. Implementação de um gerador automático com persistência em disco (contador_id.txt) para garantir unicidade e evitar colisões, mesmo após reinicializações do servidor.
+
+Tratamento Avançado de Serialização (Jackson):
+
+Flexibilidade (Loose Coupling): Configuração da propriedade FAIL_ON_UNKNOWN_PROPERTIES para false no JavalinJackson. Isso permitiu que o servidor ignorasse campos nulos enviados pelo cliente que não pertenciam à subclasse específica (ex: ignorar "formato" em objetos LivroFisico), evitando exceções de mapeamento.
+
+Preservação de Polimorfismo: Adição de visible = true na anotação @JsonTypeInfo da classe base Produto. Isso forçou o servidor a salvar e expor o metadado "tipo" na resposta JSON, permitindo que os clientes identificassem dinamicamente as classes dos objetos.
+
+Expansão do CRUD (Rota PUT): Criação da rota PUT /estoque/{id} e do método de atualização. O servidor agora localiza o objeto pelo ID no cache, substitui os dados e regrava o arquivo, mantendo o ID original intacto.
+
+3. Cliente Administrador (C# .NET)
+Papel: Painel de controle para gerência de catálogo e estoque, utilizando HttpClient nativo para comunicação remota.
+
+Principais Implementações e Correções:
+
+Modelagem de Dados de Transferência (DTO): Criação de uma classe Livro unificada para atuar como Data Transfer Object. A classe utiliza o paradigma de campos anuláveis (? em C#) combinados com anotações [JsonPropertyName] para forçar o mapeamento exato (camelCase) exigido pela API Java.
+
+Lógica de Edição Inteligente (Update): Implementação de um fluxo de alteração de duas etapas:
+
+Executa um GET para buscar o estado atual do objeto no servidor.
+
+Exibe os dados localmente, permitindo ao administrador sobrepor os valores ou pressionar Enter para manter os dados originais (preservando o estado em memória).
+
+Executa um PUT enviando a carga útil atualizada de volta ao servidor.
+
+Formatação de UI Condicional: Refatoração do método de listagem para exibir de forma coesa atributos exclusivos. O sistema intercepta campos nulos (como o peso em livros digitais) e injeta "N/A" na interface do console, garantindo uma tabela de leitura limpa.
+
+4. Cliente Consumidor (Python)
+Papel: Interface de venda focada no usuário final, isolando o processo de compra da gestão do catálogo.
+
+Principais Implementações e Correções:
+
+Consumo de API Simples: Utilização da biblioteca requests para requisições síncronas e tratamento de códigos de status HTTP (200 OK, 400 Bad Request) para o controle de fluxo do terminal.
+
+Gerenciamento de Estado Local (Carrinho): Implementação de um buffer local (carrinho = []) em memória. Isso reduz a carga no servidor, acumulando as intenções de compra antes de realizar a requisição final.
+
+Validação Descentralizada: Regra de negócio implementada no lado do cliente para verificar o valor da chave "estoque". O cliente Python bloqueia a adição de itens esgotados ao carrinho local, economizando banda de rede e evitando rejeições tardias do servidor.
+
+Processamento em Lote (Batch Processing): A finalização da compra envia um Array de objetos JSON (o carrinho completo) via método POST. O cliente aguarda o processamento transacional do Java e exibe o recibo retornado, limpando o estado local em caso de sucesso (status_code == 200).
+
+5. Conclusão do Módulo
+A adequação para o Trabalho 3 resultou em um sistema altamente desacoplado. A padronização da comunicação via REST/JSON absorveu com sucesso as diferenças sintáticas e estruturais entre Java, C# e Python. O servidor atua garantindo a integridade dos dados, enquanto os nós clientes oferecem experiências de usuário especializadas e lidam com as falhas de comunicação sem comprometer o sistema geral.
